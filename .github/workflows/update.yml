@@ -1,0 +1,64 @@
+name: Update GeoIP Data
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-geoip
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch 17mon data
+        run: |
+          url="$(python3 -c 'from geoip_gen.models import SOURCE_URL; print(SOURCE_URL)')"
+          curl -fsSL --retry 3 "$url" -o china_ip_list.txt
+
+      - name: Generate GeoIP dat
+        run: python3 generate_geoip_cn_private.py generate
+
+      - name: Inspect generated dat
+        run: |
+          python3 generate_geoip_cn_private.py inspect > "$RUNNER_TEMP/inspect.json"
+          python3 - "$RUNNER_TEMP/inspect.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+
+          counts = payload["counts"]
+          if counts["PRIVATE"] != 21:
+              raise SystemExit("PRIVATE count must be 21")
+          if counts["CN"] < 5000:
+              raise SystemExit("CN count is unexpectedly low")
+          PY
+
+      - name: Commit changed artifact
+        run: |
+          if git diff --quiet -- geoip-only-cn-private.dat; then
+            git checkout -- china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json
+          git commit -m "data: refresh geoip-only-cn-private.dat"
+          git push
