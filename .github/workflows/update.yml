@@ -33,6 +33,9 @@ jobs:
       - name: Generate GeoIP dat
         run: python3 generate_geoip_cn_private.py generate
 
+      - name: Sync upstream full dats
+        run: python3 sync_upstream.py
+
       - name: Inspect generated dat
         run: |
           python3 generate_geoip_cn_private.py inspect > "$RUNNER_TEMP/inspect.json"
@@ -50,15 +53,23 @@ jobs:
               raise SystemExit("CN count is unexpectedly low")
           PY
 
+      - name: Verify upstream dats
+        run: |
+          test -s geoip.dat
+          test -s geosite.dat
+          sha256sum -c geoip.dat.sha256
+          sha256sum -c geosite.dat.sha256
+          python3 -m unittest discover -s tests -v
+
       - name: Commit changed artifact
         run: |
-          if git diff --quiet -- geoip-only-cn-private.dat; then
-            git checkout -- china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json
+          if git diff --quiet -- geoip-only-cn-private.dat geoip.dat geosite.dat; then
+            git checkout -- china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json geoip.dat geoip.dat.sha256 geosite.dat geosite.dat.sha256 UPSTREAM_PROVENANCE.json
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json
-          git commit -m "data: refresh geoip-only-cn-private.dat"
+          git add china_ip_list.txt geoip-only-cn-private.dat geoip-only-cn-private.dat.sha256 PROVENANCE.json geoip.dat geoip.dat.sha256 geosite.dat geosite.dat.sha256 UPSTREAM_PROVENANCE.json
+          git commit -m "data: refresh geoip rule artifacts"
           git push
