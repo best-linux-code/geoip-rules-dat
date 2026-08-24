@@ -1,11 +1,11 @@
 {
   "assets": {
-    "geoip.dat": "b406dd3759037188b0674b110dcaf33664a699c0518152d0ca0d9023fc774c6b",
-    "geosite.dat": "e0f0f3f07dee391d757174e3645f3284facfe57a1f9932388252e6b4f7a67dab"
+    "geoip.dat": "8ebcb11333f7deed4bf2740f2ce3249aa8997ef03d437150c7ae373c011cd72a",
+    "geosite.dat": "add5027bf389b8a035797ca1de6ed5b4ed59cef40162fa2913dc42ee4d8819ec"
   },
-  "release_tag": "202608162214",
+  "release_tag": "202608232215",
   "source": "Loyalsoldier/v2ray-rules-dat",
-  "timestamp_utc": "2026-08-17T03:51:48Z",
+  "timestamp_utc": "2026-08-24T03:55:34Z",
   "urls": {
     "geoip.dat": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat",
     "geosite.dat": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
